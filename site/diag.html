@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Elite Tour USA — самодиагностика</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin:0; background:#12130f; color:#eee9df; font:14px/1.6 ui-monospace,Menlo,Consolas,monospace; padding:26px; }
+  h1 { font-size:19px; margin:0 0 4px; letter-spacing:-.01em; }
+  .sub { opacity:.55; font-size:12.5px; margin-bottom:20px; }
+  .bar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:22px; }
+  button { font:inherit; background:#B23A1D; color:#fff; border:0; padding:9px 16px; border-radius:6px; cursor:pointer; }
+  button.ghost { background:transparent; border:1px solid rgba(238,233,223,.28); color:inherit; }
+  button:disabled { opacity:.45; cursor:default; }
+  #verdict { font-size:16px; padding:14px 16px; border-radius:8px; margin-bottom:20px; display:none; }
+  .good { background:rgba(78,199,127,.13); border:1px solid rgba(78,199,127,.45); }
+  .bad  { background:rgba(255,106,77,.13); border:1px solid rgba(255,106,77,.5); }
+  .run  { background:rgba(226,178,60,.12); border:1px solid rgba(226,178,60,.42); }
+  table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  th,td { text-align:left; padding:7px 10px; border-bottom:1px solid rgba(238,233,223,.11); vertical-align:top; }
+  th { font-weight:400; opacity:.5; font-size:11px; text-transform:uppercase; letter-spacing:.1em; }
+  td.s { white-space:nowrap; }
+  .ok { color:#4ec77f; } .err { color:#ff6a4d; } .warn { color:#e2b23c; }
+  .note { opacity:.55; }
+  /* Ифреймы должны оставаться В ОКНЕ, иначе IntersectionObserver внутри них
+     не срабатывает и весь контент выглядит «зависшим прозрачным». Поэтому не
+     уводим их за край, а прячем под фон страницы через z-index. */
+  #frames { position:fixed; top:0; left:0; z-index:-1; }
+  #frames iframe { border:0; height:900px; display:block; }
+  pre#raw { display:none; background:#0b0c09; padding:14px; border-radius:8px; font-size:11px; max-height:340px; overflow:auto; white-space:pre-wrap; }
+</style>
+</head>
+<body>
+
+<h1>Самодиагностика сайта</h1>
+<p class="sub">Каждая страница открывается в скрытом окне заданной ширины, внутри неё прогоняются проверки из <code>assets/diag.js</code>, результаты собираются сюда. Ничего никуда не отправляется — отчёт можно скопировать кнопкой.</p>
+
+<div class="bar">
+  <button id="go">Прогнать проверку</button>
+  <button id="copy" class="ghost" disabled>Скопировать отчёт</button>
+  <button id="toggle" class="ghost" disabled>Показать JSON</button>
+  <span class="note" id="progress"></span>
+</div>
+
+<div id="verdict"></div>
+<table id="out"><thead><tr><th>Страница</th><th>Ширина</th><th>Итог</th><th>Что не так</th></tr></thead><tbody></tbody></table>
+<pre id="raw"></pre>
+<div id="frames"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var WIDTHS = [375, 414, 768, 1024, 1280, 1440];
+  var PAGES  = ['./'];   /* дополняется списком экскурсий из sitemap.xml */
+
+  var frames = document.getElementById('frames');
+  var tbody  = document.querySelector('#out tbody');
+  var verdict= document.getElementById('verdict');
+  var prog   = document.getElementById('progress');
+  var raw    = document.getElementById('raw');
+  var report = null;
+
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+  /* Открывает страницу в ифрейме нужной ширины и забирает её самоотчёт. */
+  function probe(url, width) {
+    return new Promise(function (resolve) {
+      var f = document.createElement('iframe');
+      f.width = width;
+      f.height = 900;
+      f.src = url + (url.indexOf('?') < 0 ? '?' : '&') + 'diagframe=1';
+      var done = false;
+      var finish = function (r) { if (done) return; done = true; f.remove(); resolve(r); };
+      var timer = setTimeout(function () {
+        finish({ url: url, width: width, ok: false, failed: 1, critical: 1,
+                 checks: [{ title: 'Страница не ответила за 20 с', ok: false, crit: true, info: '' }] });
+      }, 20000);
+
+      f.onload = function () {
+        var tries = 0;
+        (function wait() {
+          var win = f.contentWindow;
+          var ready;
+          try { ready = win && win.__ETU_DIAG_READY; } catch (e) {
+            clearTimeout(timer);
+            return finish({ url: url, width: width, ok: false, failed: 1, critical: 1,
+              checks: [{ title: 'Нет доступа к странице (другой домен)', ok: false, crit: true, info: String(e.message) }] });
+          }
+          if (ready) {
+            clearTimeout(timer);
+            var r;
+            try { r = win.__ETU_DIAG.run(); } catch (e) {
+              return finish({ url: url, width: width, ok: false, failed: 1, critical: 1,
+                checks: [{ title: 'Проверка не запустилась', ok: false, crit: true, info: String(e.message) }] });
+            }
+            r.url = url; r.width = width;
+            return finish(r);
+          }
+          if (++tries > 100) { clearTimeout(timer); return finish({ url: url, width: width, ok: false, failed: 1, critical: 1,
+            checks: [{ title: 'diag.js не отработал на странице', ok: false, crit: true, info: '' }] }); }
+          setTimeout(wait, 200);
+        })();
+      };
+      frames.appendChild(f);
+    });
+  }
+
+  function loadPages() {
+    return fetch('sitemap.xml').then(function (r) { return r.text(); }).then(function (t) {
+      var slugs = (t.match(/\/tury\/[a-z0-9-]+\//g) || []);
+      /* Главная на всех ширинах + по одной странице экскурсии из каждой категории. */
+      return ['./'].concat(slugs.slice(0, 4).map(function (s) { return '.' + s; }));
+    }).catch(function () { return PAGES; });
+  }
+
+  function row(r) {
+    var fails = r.checks.filter(function (c) { return !c.ok; });
+    var cls = r.ok ? 'ok' : (r.critical ? 'err' : 'warn');
+    var mark = r.ok ? '✔ чисто' : (r.critical ? '✖ ' + r.critical + ' критич.' : '▲ ' + fails.length + ' замеч.');
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + esc(r.url) + '</td><td class="s">' + r.width + '</td>' +
+      '<td class="s ' + cls + '">' + mark + '</td><td class="note">' +
+      esc(fails.map(function (c) { return c.title + (c.info ? ' — ' + c.info : ''); }).join(' · ')) + '</td>';
+    tbody.appendChild(tr);
+  }
+
+  document.getElementById('go').onclick = function () {
+    var btn = this; btn.disabled = true;
+    tbody.innerHTML = ''; raw.style.display = 'none';
+    verdict.style.display = 'block'; verdict.className = 'run'; verdict.textContent = 'Проверяю…';
+
+    loadPages().then(function (pages) {
+      var jobs = [];
+      pages.forEach(function (p, i) {
+        (i === 0 ? WIDTHS : [390, 1280]).forEach(function (wd) { jobs.push([p, wd]); });
+      });
+      var results = [], n = 0;
+      return jobs.reduce(function (chain, j) {
+        return chain.then(function () {
+          prog.textContent = (++n) + ' / ' + jobs.length + '  ' + j[0] + ' @ ' + j[1];
+          return probe(j[0], j[1]).then(function (r) { results.push(r); row(r); });
+        });
+      }, Promise.resolve()).then(function () { return results; });
+    }).then(function (results) {
+      var crit = results.reduce(function (a, r) { return a + (r.critical || 0); }, 0);
+      var warn = results.reduce(function (a, r) { return a + (r.failed || 0); }, 0) - crit;
+      report = { at: new Date().toISOString(), site: location.origin + location.pathname.replace(/diag\.html$/, ''),
+                 runs: results.length, critical: crit, warnings: warn, results: results };
+      verdict.className = crit ? 'bad' : (warn ? 'run' : 'good');
+      verdict.textContent = crit
+        ? '❌ Критических проблем: ' + crit + (warn ? ', замечаний: ' + warn : '') + ' — сайт показывается неправильно.'
+        : (warn ? '▲ Всё работает, но есть ' + warn + ' замечание(й).' : '✅ Все ' + results.length + ' прогонов чистые.');
+      prog.textContent = '';
+      document.getElementById('copy').disabled = false;
+      document.getElementById('toggle').disabled = false;
+      raw.textContent = JSON.stringify(report, null, 1);
+      window.__ETU_REPORT = report;          /* забирает внешний прогон check.mjs */
+      btn.disabled = false;
+    });
+  };
+
+  document.getElementById('copy').onclick = function () {
+    navigator.clipboard.writeText(JSON.stringify(report, null, 1));
+    this.textContent = 'Скопировано';
+    var b = this; setTimeout(function () { b.textContent = 'Скопировать отчёт'; }, 1800);
+  };
+  document.getElementById('toggle').onclick = function () {
+    raw.style.display = raw.style.display === 'block' ? 'none' : 'block';
+  };
+
+  if (/[?&]auto=1/.test(location.search)) document.getElementById('go').click();
+})();
+</script>
+</body>
+</html>

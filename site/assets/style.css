@@ -479,12 +479,15 @@ body.menu-open .drawer { transform: translateY(0); }
 .cta__or { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: rgba(242,237,227,.42); margin-bottom: 16px; }
 
 .form { display: grid; gap: 16px; }
-.form__row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.field { display: grid; gap: 7px; }
+/* minmax(0,…) и min-width:0 обязательны: у input есть своя минимальная ширина,
+   и без этого колонки грид-строки распирают страницу в горизонтальный скролл. */
+.form__row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.field { display: grid; gap: 7px; min-width: 0; }
+.form .btn { white-space: normal; }
 .field > span { font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: rgba(242,237,227,.52); }
 .field input, .field textarea, .field select {
   background: transparent; border: 0; border-bottom: 1px solid rgba(242,237,227,.28);
-  padding: 10px 0; color: var(--paper); outline: 0;
+  padding: 10px 0; color: var(--paper); outline: 0; min-width: 0; width: 100%;
   transition: border-color .2s var(--ease);
   border-radius: 0;
 }

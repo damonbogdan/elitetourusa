@@ -1,0 +1,89 @@
+name: Самодиагностика сайта
+
+# Сторож работает независимо от того, включён ли Mac: каждый день проверяет
+# опубликованный сайт и заводит issue, если он показывается неправильно.
+on:
+  schedule:
+    - cron: '17 6 * * *'        # ежедневно 06:17 UTC
+  push:
+    branches: [main, gh-pages]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Дать сайту доехать до Pages
+        if: github.event_name == 'push'
+        run: sleep 60
+
+      - name: Прогнать проверку
+        id: diag
+        run: node check.mjs https://damonbogdan.github.io/elitetourusa 2>&1 | tee diag.log
+        continue-on-error: true
+
+      - name: Отчёт в лог сборки
+        run: |
+          {
+            echo '## Самодиагностика Elite Tour USA'
+            echo '```'
+            sed -e 's/\x1b\[[0-9;]*m//g' diag.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Сохранить отчёт
+        uses: actions/upload-artifact@v4
+        with:
+          name: diag-report
+          path: |
+            diag-report.json
+            diag.log
+          retention-days: 30
+
+      - name: Завести issue, если сайт сломан
+        if: steps.diag.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BODY=$(mktemp)
+          {
+            echo "Автоматическая проверка нашла проблемы на https://damonbogdan.github.io/elitetourusa"
+            echo
+            echo '```'
+            sed -e 's/\x1b\[[0-9;]*m//g' diag.log
+            echo '```'
+            echo
+            echo "Прогон: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          } > "$BODY"
+
+          EXISTING=$(gh issue list --label diag --state open --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body-file "$BODY"
+          else
+            gh label create diag --color B23A1D --description "Самодиагностика сайта" 2>/dev/null || true
+            gh issue create --title "Сайт показывается неправильно" --label diag --body-file "$BODY"
+          fi
+
+      - name: Закрыть issue, если всё починилось
+        if: steps.diag.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for n in $(gh issue list --label diag --state open --json number --jq '.[].number'); do
+            gh issue comment "$n" --body "Проверка снова чистая — закрываю."
+            gh issue close "$n"
+          done
+
+      - name: Провалить сборку при поломке
+        if: steps.diag.outcome == 'failure'
+        run: exit 1

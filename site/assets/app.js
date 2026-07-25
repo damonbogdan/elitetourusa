@@ -4,6 +4,12 @@
 
   var body = document.body;
 
+  /* Отметка для самодиагностики + снятие «страховочного таймера»: если этот
+     файл не загрузится, инлайн-скрипт в <head> сам уберёт класс js через 4 с,
+     и контент, скрытый до анимации появления, всё равно станет видимым. */
+  window.__ETU_APP = true;
+  clearTimeout(window.__ETU_BOOT);
+
   /* --- шапка: прозрачная над героем, плотная при скролле --- */
   var hdr = document.querySelector('.hdr');
   var hero = document.querySelector('.hero, .thero');

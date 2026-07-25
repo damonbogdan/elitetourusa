@@ -84,7 +84,7 @@ const head = ({ title, desc, canonical, image, jsonld }) => `
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="${canonical.includes('/tury/') ? '../../' : ''}assets/style.css">
 ${jsonld ? `<script type="application/ld+json">${JSON.stringify(jsonld)}</script>` : ''}
-<script>document.documentElement.className+=" js"</script>
+<script>document.documentElement.className+=" js";window.__ETU_BOOT=setTimeout(function(){document.documentElement.classList.remove("js")},4000)</script>
 </head>
 <body>`;
 
@@ -152,6 +152,7 @@ const footer = (base = '') => `
 </footer>
 ${dock()}
 <script src="${base}assets/app.js" defer></script>
+<script src="${base}assets/diag.js" defer></script>
 </body>
 </html>`;
 
@@ -506,7 +507,7 @@ ${header()}
           </label>
         </div>
         <label class="field"><span>Что хочется увидеть</span><textarea name="note" placeholder="Свободной форме: повод, интересы, темп, пожелания"></textarea></label>
-        <button class="btn btn--wa" type="submit">${ICON.wa} Собрать сообщение и открыть WhatsApp</button>
+        <button class="btn btn--wa" type="submit">${ICON.wa} Отправить в WhatsApp</button>
         <p class="form__note" data-ok hidden>Сообщение собрано — окно WhatsApp должно было открыться. Если нет, напишите напрямую: ${esc(B.phone)}.</p>
         <p class="form__note">Данные никуда не отправляются и нигде не сохраняются: кнопка только формирует текст и открывает чат.</p>
       </form>
