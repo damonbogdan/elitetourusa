@@ -29,10 +29,17 @@
 
   var CHECKS = [
 
+    /* Фон зависит от темы системы, поэтому годятся оба значения --paper. */
     { id: 'css', crit: true, title: 'Таблица стилей применилась', run: function () {
       var bg = getComputedStyle(d.body).backgroundColor;
-      var ok = bg === 'rgb(242, 237, 227)';
-      return { ok: ok, info: ok ? bg : 'фон body = ' + bg + ', ожидался rgb(242, 237, 227) — style.css не загрузился' };
+      var light = 'rgb(242, 237, 227)', dark = 'rgb(20, 18, 14)';
+      var ok = bg === light || bg === dark;
+      var dm = w.matchMedia && w.matchMedia('(prefers-color-scheme: dark)').matches;
+      return {
+        ok: ok,
+        info: ok ? (dm ? 'тёмная тема' : 'светлая тема')
+                 : 'фон body = ' + bg + ', ожидался ' + light + ' или ' + dark + ' — style.css не загрузился',
+      };
     }},
 
     { id: 'js', crit: true, title: 'Скрипт страницы отработал', run: function () {
