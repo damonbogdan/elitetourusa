@@ -296,6 +296,14 @@ body.menu-open .drawer { transform: translateY(0); }
 }
 .hero__in { flex: 0 1 auto; }
 .hero h1 { margin: 18px 0 0; max-width: 15ch; text-shadow: 0 2px 30px rgba(0,0,0,.28); }
+/* Вторая половина фразы: в кегль заголовка она не влезает ни на одной ширине,
+   поэтому идёт подстрокой — тем же шрифтом, вдвое мельче. */
+.hero__deck {
+  font-family: var(--disp); font-weight: 700; letter-spacing: -.04em;
+  font-size: clamp(19px, 2.5vw, 31px); line-height: 1.1;
+  margin-top: 14px; color: rgba(255,255,255,.9);
+  text-shadow: 0 2px 22px rgba(0,0,0,.32);
+}
 .hero .label { color: rgba(255,255,255,.82); }
 .hero .label::before { background: #fff; }
 
