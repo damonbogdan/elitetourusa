@@ -523,7 +523,7 @@ footer { background: #101116; color: rgba(242,237,227,.6); padding: 52px 0 100px
 .thero { position: relative; min-height: min(62svh, 520px); display: flex; align-items: flex-end; color: #fff; padding: 100px 0 40px; isolation: isolate; overflow: hidden; }
 .thero__bg { position: absolute; inset: 0; z-index: -2; }
 /* Кадр смещён вверх: заголовок лежит внизу, а сюжет (люди, горизонт) — выше. */
-.thero__bg img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 38%; }
+.thero__bg img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 28%; }
 .thero::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(14,15,12,.6), rgba(14,15,12,.14) 42%, rgba(14,15,12,.88)); }
 .thero h1 { margin: 16px 0 0; max-width: 18ch; }
 .crumbs { font-family: var(--mono); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.7); }
