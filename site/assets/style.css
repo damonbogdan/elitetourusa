@@ -162,8 +162,9 @@ section { padding: clamp(64px, 8vw, 118px) 0; }
   text-transform: uppercase;
   opacity: .7;
   margin-top: 4px;
+  white-space: nowrap;
 }
-.hdr nav { display: flex; gap: clamp(14px, 2vw, 26px); font-size: 14.5px; font-weight: 500; }
+.hdr nav { display: flex; gap: clamp(14px, 2vw, 26px); font-size: 14.5px; font-weight: 500; white-space: nowrap; }
 .hdr nav a { opacity: .85; transition: opacity .2s; position: relative; }
 .hdr nav a:hover { opacity: 1; }
 .hdr nav a::after {
@@ -173,7 +174,7 @@ section { padding: clamp(64px, 8vw, 118px) 0; }
   transition: transform .28s var(--ease);
 }
 .hdr nav a:hover::after { transform: scaleX(1); }
-.hdr__tel { font-family: var(--mono); font-size: 13.5px; letter-spacing: -.01em; }
+.hdr__tel { font-family: var(--mono); font-size: 13.5px; letter-spacing: -.01em; white-space: nowrap; }
 
 .hdr.is-solid {
   background: rgba(242, 237, 227, .86);
@@ -577,6 +578,16 @@ footer { background: #101116; color: rgba(242,237,227,.6); padding: 52px 0 100px
 
 /* ---------- адаптив ---------- */
 
+/* Шапка сдаётся раньше остальной сетки: пять пунктов + телефон + кнопка
+   перестают помещаться уже около 1260px и начинают переноситься. */
+@media (max-width: 1260px) {
+  .hdr nav, .hdr__tel, .hdr .btn--wa, .brand span { display: none; }
+  .burger { display: flex; }
+  .only-mobile { display: block; }
+  .dock { display: flex; }
+  footer { padding-bottom: 108px; }
+}
+
 @media (max-width: 1080px) {
   .grid { grid-template-columns: repeat(2, 1fr); }
   .facts__grid { grid-template-columns: repeat(2, 1fr); }
@@ -589,13 +600,6 @@ footer { background: #101116; color: rgba(242,237,227,.6); padding: 52px 0 100px
 }
 
 @media (max-width: 900px) {
-  /* WhatsApp и телефон продублированы в нижней панели — в шапке они лишние. */
-  .hdr nav, .hdr__tel, .hdr .btn--wa, .brand span { display: none; }
-  .burger { display: flex; }
-  .only-mobile { display: block; }
-  .dock { display: flex; }
-  body { padding-bottom: 0; }
-  footer { padding-bottom: 108px; }
   .sec-head { grid-template-columns: 1fr; align-items: start; }
   .about__grid { grid-template-columns: 1fr; }
   .about__ph { max-width: 560px; }
