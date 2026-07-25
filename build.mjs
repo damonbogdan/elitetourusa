@@ -304,6 +304,7 @@ ${header()}
       <div class="cats__grid">
         ${S.categories.map((c, i) => `
         <a class="cat rv" href="#tours" data-jump="${c.id}">
+          <img class="cat__ph" src="assets/img/${c.img}.jpg" alt="" aria-hidden="true" loading="lazy" width="1100" height="733">
           <span class="cat__i">${String(i + 1).padStart(2, '0')}</span>
           <h3>${esc(c.title)}</h3>
           <p>${esc(c.desc)}</p>

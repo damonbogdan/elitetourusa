@@ -294,17 +294,40 @@ body.menu-open .drawer { transform: translateY(0); }
 
 .cats { background: var(--paper-2); }
 .cats__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+
+/* Плитки настроения: фото под тёмной шторкой. Намеренно не похожи на карточки
+   каталога ниже (фото сверху + светлое тело) — иначе две сетки подряд сливаются. */
 .cat {
-  background: var(--card); border: 1px solid var(--line-soft);
-  border-radius: var(--r); padding: 24px 22px 20px;
-  display: flex; flex-direction: column; min-height: 190px;
-  transition: transform .25s var(--ease), box-shadow .25s var(--ease), border-color .25s var(--ease);
+  position: relative; isolation: isolate; overflow: hidden;
+  border-radius: var(--r); padding: 22px 20px 20px;
+  display: flex; flex-direction: column; min-height: 290px;
+  color: #fff; background: #2a2822;
+  transition: transform .28s var(--ease), box-shadow .28s var(--ease);
 }
-.cat:hover { transform: translateY(-4px); border-color: var(--ink); box-shadow: 0 14px 34px rgba(23,24,28,.09); }
-.cat__i { font-family: var(--mono); font-size: 11px; color: var(--clay); letter-spacing: .1em; }
-.cat h3 { font-size: 21px; margin: 14px 0 8px; letter-spacing: -.025em; }
-.cat p { font-size: 13.5px; color: var(--ink-3); line-height: 1.55; }
-.cat__go { margin-top: auto; padding-top: 16px; font-size: 13.5px; font-weight: 600; color: var(--clay); }
+.cat__ph {
+  position: absolute; inset: 0; z-index: -2;
+  width: 100%; height: 100%; object-fit: cover;
+  filter: saturate(.7) brightness(.8);
+  transition: transform .8s var(--ease);
+}
+/* Шторка плотная и с запасом: под ней лежит белый текст, а сюжеты у плиток
+   разной яркости — от выгоревшего пляжа до ночного огня. */
+.cat::after {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background:
+    linear-gradient(180deg, rgba(16,14,11,.5) 0%, rgba(16,14,11,.34) 26%, rgba(16,14,11,.8) 62%, rgba(16,14,11,.95) 100%),
+    linear-gradient(0deg, rgba(178,58,29,.14), transparent 55%);
+  transition: opacity .3s var(--ease);
+}
+.cat:hover { transform: translateY(-5px); box-shadow: 0 18px 40px rgba(23,24,28,.22); }
+.cat:hover .cat__ph { transform: scale(1.06); }
+.cat:hover::after { opacity: .88; }
+.cat__i { font-family: var(--mono); font-size: 11px; color: #F09070; letter-spacing: .12em; text-shadow: 0 1px 10px rgba(0,0,0,.6); }
+.cat h3 { font-size: 21px; margin: auto 0 8px; letter-spacing: -.025em; text-shadow: 0 1px 16px rgba(0,0,0,.5); }
+.cat p { font-size: 13px; color: rgba(255,255,255,.88); line-height: 1.5; text-shadow: 0 1px 10px rgba(0,0,0,.5); }
+.cat__go { padding-top: 14px; font-size: 13.5px; font-weight: 600; color: #fff; }
+.cat__go::after { content: ""; display: block; width: 34px; height: 1px; background: var(--clay); margin-top: 8px; transition: width .3s var(--ease); }
+.cat:hover .cat__go::after { width: 62px; }
 
 /* ---------- каталог ---------- */
 
@@ -612,6 +635,9 @@ footer { background: #101116; color: rgba(242,237,227,.6); padding: 52px 0 100px
 }
 
 @media (max-width: 620px) {
+  /* Пять плиток по 290px подряд превращают выбор направления в долгий скролл. */
+  .cat { min-height: 190px; padding: 18px; }
+  .cat h3 { font-size: 19px; }
   .grid { grid-template-columns: 1fr; }
   .facts__grid { grid-template-columns: 1fr; }
   .facts__grid > div, .facts__grid > div:not(:first-child) { padding: 20px 0; }
