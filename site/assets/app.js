@@ -112,6 +112,22 @@
     });
   }
 
+  /* --- видео: плеер YouTube подгружается только по клику --- */
+  document.querySelectorAll('.ytv[data-yt]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var f = document.createElement('iframe');
+      f.src = 'https://www.youtube-nocookie.com/embed/' + b.dataset.yt + '?autoplay=1&rel=0';
+      f.title = b.getAttribute('aria-label') || 'Видео';
+      f.allow = 'accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture';
+      f.allowFullscreen = true;
+      f.loading = 'lazy';
+      var box = document.createElement('div');
+      box.className = 'ytv ytv--live';
+      box.appendChild(f);
+      b.replaceWith(box);
+    });
+  });
+
   /* --- год в подвале --- */
   var y = document.querySelector('[data-year]');
   if (y) y.textContent = String(new Date().getFullYear());

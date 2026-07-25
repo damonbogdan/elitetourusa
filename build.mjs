@@ -78,7 +78,8 @@ const head = ({ title, desc, canonical, image, jsonld }) => `
 <meta property="og:url" content="${esc(canonical)}">
 <meta property="og:image" content="${esc(image)}">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#F2EDE3">
+<meta name="theme-color" content="#F2EDE3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14120E" media="(prefers-color-scheme: dark)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -522,8 +523,12 @@ ${footer()}`;
 /* ---------- страница экскурсии ---------- */
 
 function buildTour(t, i) {
-  const others = S.tours.filter((x) => x.slug !== t.slug && x.cat === t.cat).slice(0, 3);
-  const rest = others.length ? others : S.tours.filter((x) => x.slug !== t.slug).slice(0, 3);
+  /* Сначала соседи по категории, потом добираем до трёх остальными —
+     иначе в маленьких категориях («Природа») висела одна одинокая карточка. */
+  const sameCat = S.tours.filter((x) => x.slug !== t.slug && x.cat === t.cat);
+  const filler = S.tours.filter((x) => x.slug !== t.slug && x.cat !== t.cat && x.featured);
+  const spare = S.tours.filter((x) => x.slug !== t.slug && x.cat !== t.cat && !x.featured);
+  const rest = [...sameCat, ...filler, ...spare].slice(0, 3);
   const waText = `Здравствуйте! Пишу с сайта. Интересует экскурсия «${t.title}».`;
 
   const jsonld = {
@@ -607,6 +612,18 @@ ${header('../../')}
             <ul class="out">${t.excluded.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
           </div>
         </div>`}
+
+        ${t.videos ? `
+        <h2 class="h-display" style="margin-top:44px">${t.videos.length > 1 ? 'Видео с маршрута' : 'Видео с маршрута'}</h2>
+        <p class="muted" style="font-size:14px;margin-bottom:20px">Снято Геннадием в этих же поездках — канал <a href="${B.youtube}" target="_blank" rel="noopener" style="text-decoration:underline">${esc(B.youtubeHandle)}</a>.</p>
+        <div class="vids">
+          ${t.videos.map((v) => `
+          <button class="ytv" type="button" data-yt="${v.id}" aria-label="Смотреть: ${esc(v.title)}">
+            <img src="../../assets/video/${v.id}.jpg" alt="" aria-hidden="true" loading="lazy" width="640" height="360">
+            <span class="ytv__play" aria-hidden="true"></span>
+            <span class="ytv__t">${esc(v.title)}</span>
+          </button>`).join('')}
+        </div>` : ''}
 
         <p class="muted" style="margin-top:34px;font-size:14px;max-width:64ch">
           Программу можно менять: сократить, добавить остановки, подстроить под детей
